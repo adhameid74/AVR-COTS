@@ -12,6 +12,11 @@
 #ifndef STD_TYPES_H_
 #define STD_TYPES_H_
 
+#define NO_ERROR				0
+#define ERROR					1
+#define NULL_POINTER_ERROR		2
+#define TIMEOUT_ERROR			3
+
 #define NULL 		(void *)0
 
 typedef	unsigned char u8;
