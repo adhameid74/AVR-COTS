@@ -15,7 +15,9 @@
 void USART_voidInit();
 u8 USART_u8SendDataSynch(u16 Copy_u16Data);
 u8 USART_u8ReceiveDataSynch(u16* Copy_pu16Data);
-u8 USART_u8SendArraySynch(u16* Copy_au16Data, u8 Copy_u8Size);
-u8 USART_u8ReceiveArraySynch(u16* Copy_au16Data, u8 Copy_u8Size);
+u8 USART_u8SendBufferSynch(u16* Copy_au16Data, u8 Copy_u8Size);
+u8 USART_u8ReceiveBufferSynch(u16* Copy_au16Data, u8 Copy_u8Size);
+u8 USART_u8SendBufferAsynch(u16* Copy_au16Data, u8 Copy_u8Size, void (*CallBackFunc) (void));
+u8 USART_u8ReceiveBufferAsynch(u16* Copy_au16Data, u8 Copy_u8Size, void (*CallBackFunc) (void));
 
 #endif

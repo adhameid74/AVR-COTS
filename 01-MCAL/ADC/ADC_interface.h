@@ -59,7 +59,7 @@
 
 void ADC_voidInit();
 u8 ADC_u8StartConversionSynch(u8 Copy_u8Channel, u16* Copy_u16ptrResult, u32 Copy_u32TimeOut);
-u8 ADC_u8StartConversionASynch(u8 Copy_u8Channel);
+u8 ADC_u8StartConversionASynch(u8 Copy_u8Channel, void (*ISR)(void));
 u8 ADC_u8SetReference(u8 Copy_u8Reference);
 u8 ADC_u8SetResultNumOfBits(u8 Copy_u8NumOfBits);
 void ADC_voidEnable();

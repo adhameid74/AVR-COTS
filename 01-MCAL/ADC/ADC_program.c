@@ -10,7 +10,6 @@
 
 #include "STD_TYPES.h"
 #include "BIT_MATH.h"
-#include "ERROR.h"
 #include "ADC_config.h"
 #include "ADC_interface.h"
 #include "ADC_private.h"
@@ -23,12 +22,12 @@ void ADC_voidInit()
 	// ADC Reference Voltage Selection
 #if ADC_REF_SELECTION == ADC_u8_AREF
 
-	CLEAR_BIT(ADMUX, ADMUX_REFS1);
-	CLEAR_BIT(ADMUX, ADMUX_REFS0);
+	CLR_BIT(ADMUX, ADMUX_REFS1);
+	CLR_BIT(ADMUX, ADMUX_REFS0);
 
 #elif ADC_REF_SELECTION == ADC_u8_AVCC
 
-	CLEAR_BIT(ADMUX, ADMUX_REFS1);
+	CLR_BIT(ADMUX, ADMUX_REFS1);
 	SET_BIT(ADMUX, ADMUX_REFS0);
 
 #elif ADC_REF_SELECTION == ADC_u8_INTERNAL_2_56_VOLT
@@ -49,7 +48,7 @@ void ADC_voidInit()
 
 #elif ADC_RESULT == ADC_u8_RESULT_10_BITS
 
-	CLEAR_BIT(ADMUX, ADMUX_ADLAR);
+	CLR_BIT(ADMUX, ADMUX_ADLAR);
 
 #else
 
@@ -68,7 +67,7 @@ void ADC_voidInit()
 
 #elif ADC_EN == DISABLE
 
-	CLEAR_BIT(ADCSRA, ADCSRA_ADEN);
+	CLR_BIT(ADCSRA, ADCSRA_ADEN);
 
 #else
 
@@ -146,13 +145,13 @@ u8 ADC_u8SetReference(u8 Copy_u8Reference)
 {
 	if(ADC_u8_AREF == Copy_u8Reference)
 	{
-		CLEAR_BIT(ADMUX, ADMUX_REFS1);
-		CLEAR_BIT(ADMUX, ADMUX_REFS0);
+		CLR_BIT(ADMUX, ADMUX_REFS1);
+		CLR_BIT(ADMUX, ADMUX_REFS0);
 		return NO_ERROR;
 	}
 	else if(ADC_u8_AVCC == Copy_u8Reference)
 	{
-		CLEAR_BIT(ADMUX, ADMUX_REFS1);
+		CLR_BIT(ADMUX, ADMUX_REFS1);
 		SET_BIT(ADMUX, ADMUX_REFS0);
 		return NO_ERROR;
 	}
@@ -177,7 +176,7 @@ u8 ADC_u8SetResultNumOfBits(u8 Copy_u8NumOfBits)
 	}
 	else if(ADC_u8_RESULT_10_BITS == Copy_u8NumOfBits)
 	{
-		CLEAR_BIT(ADMUX, ADMUX_ADLAR);
+		CLR_BIT(ADMUX, ADMUX_ADLAR);
 		return NO_ERROR;
 	}
 	else
@@ -193,7 +192,7 @@ void ADC_voidEnable()
 
 void ADC_voidDisable()
 {
-	CLEAR_BIT(ADCSRA, ADCSRA_ADEN);
+	CLR_BIT(ADCSRA, ADCSRA_ADEN);
 }
 
 u8 ADC_u8SetPrescalerFactor(u8 Copy_u8Factor)

@@ -9,12 +9,21 @@
  * 
  */
 
-#include "STD_TYPES"
-#include "BIT_MATH"
+#include "STD_TYPES.h"
+#include "BIT_MATH.h"
 
 #include "USART_interface.h"
 #include "USART_private.h"
 #include "USART_config.h"
+
+static u16 USART_au16SendBuffer[MAX_BUFFER_SIZE];
+static u16* USART_pu16ReceiveBuffer = NULL;
+static u8 USART_u8SendIndex = 0;
+static u8 USART_u8ReceiveIndex = 0;
+static u8 USART_u8SendBufferSize = 0;
+static u8 USART_u8ReceiveBufferSize = 0;
+static void (*USART_SendCallBackFunc)(void) = NULL;
+static void (*USART_ReceiveCallBackFunc)(void) = NULL;
 
 void USART_voidInit()
 {
@@ -23,30 +32,6 @@ void USART_voidInit()
 
     CLR_BIT(UCSRA, UCSRA_MPCM);
     CLR_BIT(UCSRA, UCSRA_U2X);
-
-    #if RX_INTERRUPT == ENABLED
-        SET_BIT(UCSRB, UCSRB_RXCIE);
-    #elif RX_INTERRUPT == DISABLED
-        CLR_BIT(UCSRB, UCSRB_RXCIE);
-    #else
-        #error "Wrong Configuration Of RX_INTERRUPT"
-    #endif
-
-    #if TX_INTERRUPT == ENABLED
-        SET_BIT(UCSRB, UCSRB_TXCIE);
-    #elif TX_INTERRUPT == DISABLED
-        CLR_BIT(UCSRB, UCSRB_TXCIE);
-    #else
-        #error "Wrong Configuration Of TX_INTERRUPT"
-    #endif
-
-    #if DATA_REGISTER_EMPTY_INTERRUPT == ENABLED
-        SET_BIT(UCSRB, UCSRB_UDRIE);
-    #elif DATA_REGISTER_EMPTY_INTERRUPT == DISABLED
-        CLR_BIT(UCSRB, UCSRB_UDRIE);
-    #else
-        #error "Wrong Configuration Of DATA_REGISTER_EMPTY_INTERRUPT"
-    #endif
 
     #if DATA_SIZE == 5
         CLR_BIT(UCSRC_VALUE, UCSRC_UCSZ0);
@@ -131,6 +116,10 @@ void USART_voidInit()
     #else
         #error "Wrong Configuration Of TX_ENABLE"
     #endif
+
+    #if MAX_BUFFER_SIZE <= 0
+        #error "Wrong Configuration Of MAX_BUFFER_SIZE"
+    #endif
 }
 
 u8 USART_u8SendDataSynch(u16 Copy_u16Data)
@@ -178,9 +167,10 @@ u8 USART_u8ReceiveDataSynch(u16* Copy_pu16Data)
         }
     #endif
     *Copy_pu16Data |= UDR;
+    return NO_ERROR;
 }
 
-u8 USART_u8SendArraySynch(u16* Copy_au16Data, u8 Copy_u8Size)
+u8 USART_u8SendBufferSynch(u16* Copy_au16Data, u8 Copy_u8Size)
 {
     u8 Local_u8ErrorState = NO_ERROR;
     if(Copy_au16Data == NULL)
@@ -198,7 +188,7 @@ u8 USART_u8SendArraySynch(u16* Copy_au16Data, u8 Copy_u8Size)
     return Local_u8ErrorState;
 }
 
-u8 USART_u8ReceiveArraySynch(u16* Copy_au16Data, u8 Copy_u8Size)
+u8 USART_u8ReceiveBufferSynch(u16* Copy_au16Data, u8 Copy_u8Size)
 {
     u8 Local_u8ErrorState = NO_ERROR;
     if(Copy_au16Data == NULL)
@@ -207,12 +197,96 @@ u8 USART_u8ReceiveArraySynch(u16* Copy_au16Data, u8 Copy_u8Size)
     }
     for (u8 Local_u8Counter = 0; Local_u8Counter < Copy_u8Size; Local_u8Counter++)
     {
-        Local_u8ErrorState = USART_u8ReceiveDataSynch(Copy_au16Data[Local_u8Counter]);
+        Local_u8ErrorState = USART_u8ReceiveDataSynch(&Copy_au16Data[Local_u8Counter]);
         if(Local_u8ErrorState != NO_ERROR)
         {
             return Local_u8ErrorState;
         }
     }
     return Local_u8ErrorState;
+}
 
+u8 USART_u8SendBufferAsynch(u16* Copy_au16Data, u8 Copy_u8Size, void (*CallBackFunc) (void))
+{
+    if(Copy_au16Data == NULL)
+    {
+        return NULL_POINTER_ERROR;
+    }
+    if(CallBackFunc == NULL)
+    {
+        return NULL_POINTER_ERROR;
+    }
+    if( (Copy_u8Size > MAX_BUFFER_SIZE) || (Copy_u8Size == 0) )
+    {
+        return ERROR;
+    }
+    USART_u8SendBufferSize = Copy_u8Size;
+    for (u8 Local_u8Counter = 0; Local_u8Counter < Copy_u8Size; Local_u8Counter++)
+    {
+        USART_au16SendBuffer[Local_u8Counter] = Copy_au16Data[Local_u8Counter];
+    }
+    USART_SendCallBackFunc = CallBackFunc;
+    USART_u8SendIndex = 0;
+    SET_BIT(UCSRB, UCSRB_TXCIE);
+    USART_u8SendDataSynch(USART_au16SendBuffer[USART_u8SendIndex]);
+    return NO_ERROR;
+}
+
+u8 USART_u8ReceiveBufferAsynch(u16* Copy_au16Data, u8 Copy_u8Size, void (*CallBackFunc) (void))
+{
+    if(Copy_au16Data == NULL)
+    {
+        return NULL_POINTER_ERROR;
+    }
+    if(CallBackFunc == NULL)
+    {
+        return NULL_POINTER_ERROR;
+    }
+    if( (Copy_u8Size > MAX_BUFFER_SIZE) || (Copy_u8Size == 0) )
+    {
+        return ERROR;
+    }
+    USART_u8ReceiveBufferSize = Copy_u8Size;
+    USART_pu16ReceiveBuffer = Copy_au16Data;
+    USART_ReceiveCallBackFunc = CallBackFunc;
+    USART_u8ReceiveIndex = 0;
+    SET_BIT(UCSRB, UCSRB_RXCIE);
+    USART_u8ReceiveDataSynch(USART_pu16ReceiveBuffer);
+    return NO_ERROR;
+}
+
+void __vector_13() __attribute__((signal));
+void __vector_13()
+{
+    USART_u8ReceiveIndex++;
+    if(USART_u8ReceiveIndex == (USART_u8ReceiveBufferSize))
+    {
+        CLR_BIT(UCSRB, UCSRB_RXCIE);
+        USART_ReceiveCallBackFunc();
+    }
+    else
+    {
+        USART_u8ReceiveDataSynch(&USART_pu16ReceiveBuffer[USART_u8ReceiveIndex]);
+    }
+}
+
+void __vector_14() __attribute__((signal));
+void __vector_14()
+{
+
+}
+
+void __vector_15() __attribute__((signal));
+void __vector_15()
+{
+    USART_u8SendIndex++;
+    if(USART_u8SendIndex == (USART_u8SendBufferSize))
+    {
+        CLR_BIT(UCSRB, UCSRB_TXCIE);
+        USART_SendCallBackFunc();
+    }
+    else
+    {
+        USART_u8SendDataSynch(USART_au16SendBuffer[USART_u8SendIndex]);
+    }
 }

@@ -16,21 +16,6 @@
  * Options:
  * DISABLED, ENABLED
  */
-#define RX_INTERRUPT							DISABLED
-/**
- * Options:
- * DISABLED, ENABLED
- */
-#define TX_INTERRUPT							DISABLED
-/**
- * Options:
- * DISABLED, ENABLED
- */
-#define DATA_REGISTER_EMPTY_INTERRUPT			DISABLED
-/**
- * Options:
- * DISABLED, ENABLED
- */
 #define RX_ENABLE								ENABLED
 /**
  * Options:
@@ -69,6 +54,8 @@
  * 2400, 4800, 9600
  */
 #define BAUD_RATE                               9600
+
+#define MAX_BUFFER_SIZE                         20
 
 #define TX_TIMEOUT                              1000
 #define RX_TIMEOUT                              1000

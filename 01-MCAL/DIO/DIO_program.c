@@ -9,7 +9,7 @@
 
 u8 DIO_u8SetPinValue(u8 Copy_u8Port, u8 Copy_u8Pin, u8 Copy_u8Value)
 {
-	u8 Local_u8ErrorState = OK;
+	u8 Local_u8ErrorState = NO_ERROR;
 	if (Copy_u8Pin>DIO_u8_NUMBER_OF_PINS)
 	{
 		Local_u8ErrorState = ERROR;	
@@ -48,7 +48,7 @@ u8 DIO_u8SetPinValue(u8 Copy_u8Port, u8 Copy_u8Pin, u8 Copy_u8Value)
 
 u8 DIO_u8SetPortValue(u8 Copy_u8Port, u8 Copy_u8Value)
 {
-	u8 Local_u8ErrorState = OK;
+	u8 Local_u8ErrorState = NO_ERROR;
 	switch(Copy_u8Port)
 	{
 		case DIO_u8_PORTA: PORTA = Copy_u8Value; break;
@@ -62,10 +62,10 @@ u8 DIO_u8SetPortValue(u8 Copy_u8Port, u8 Copy_u8Value)
 
 u8 DIO_u8GetPinValue(u8 Copy_u8Port, u8 Copy_u8Pin, u8* Copy_u8Value)
 {
-	u8 Local_u8ErrorState = OK;
+	u8 Local_u8ErrorState = NO_ERROR;
 	if (Copy_u8Value==NULL)
 	{
-		Local_u8ErrorState = NULL_POINTER;
+		Local_u8ErrorState = NULL_POINTER_ERROR;
 		return Local_u8ErrorState;
 	}
 	switch(Copy_u8Port)
@@ -81,10 +81,10 @@ u8 DIO_u8GetPinValue(u8 Copy_u8Port, u8 Copy_u8Pin, u8* Copy_u8Value)
 
 u8 DIO_u8GetPortValue(u8 Copy_u8Port, u8* Copy_u8Value)
 {
-	u8 Local_u8ErrorState = OK;
+	u8 Local_u8ErrorState = NO_ERROR;
 	if (Copy_u8Value==NULL)
 	{
-		Local_u8ErrorState = NULL_POINTER;
+		Local_u8ErrorState = NULL_POINTER_ERROR;
 		return Local_u8ErrorState;
 	}
 	switch(Copy_u8Port)
