@@ -55,6 +55,16 @@
 #define SLAVE_DATA_RECEIVED      0x80
 #define SLAVE_BYTE_TRANSMITTED   0xB8
 
+#define START_CONDITION_STATE		1
+#define SLAVE_ADDRESS_STATE			2
+#define SENDING_BYTE_STATE			3
+#define STOP_CONDITION_STATE		4
+
+static u8 AsynchStatus = 0;
+static void (*TWI_CallBack)(void) = NULL;
+static u8 DataByte;
+static u8 SlaveAddress;
+
 static u8 SendStartCondition();
 static u8 SendRepeatedStart();
 static u8 SendSlaveAddress(u8 Copy_u8Address, u8 Copy_u8Direction);

@@ -42,7 +42,7 @@ void TWI_voidEnableAck()
 	SET_BIT(TWCR, TWCR_TWEA);
 }
 
-u8 TWI_u8SendByte(u8 Copy_u8SlaveAddress, u8 Copy_u8Data)
+u8 TWI_u8SendByteSynch(u8 Copy_u8SlaveAddress, u8 Copy_u8Data)
 {
 	if( SendStartCondition() )
 	{
@@ -63,7 +63,19 @@ u8 TWI_u8SendByte(u8 Copy_u8SlaveAddress, u8 Copy_u8Data)
 	return NO_ERROR;
 }
 
-u8 TWI_u8ReceiveByte(u8 Copy_u8SlaveAddress, u8* Copy_u8Data)
+u8 TWI_u8SendByteAsynch(u8 Copy_u8SlaveAddress, u8 Copy_u8Data, void (*Copy_ptrCallBack)(void))
+{
+	AsynchStatus = START_CONDITION_STATE;
+	TWI_CallBack = Copy_ptrCallBack;
+	DataByte = Copy_u8Data;
+	SlaveAddress = Copy_u8SlaveAddress<<1;
+	SET_BIT(TWCR, TWCR_TWSTA);
+	SET_BIT(TWCR, TWCR_TWINT);
+	SET_BIT(TWCR, TWCR_TWIE);
+	return NO_ERROR;
+}
+
+u8 TWI_u8ReceiveByteSynch(u8 Copy_u8SlaveAddress, u8* Copy_u8Data)
 {
 	if( SendStartCondition() )
 	{
@@ -136,4 +148,44 @@ static void SendStopCondition()
 {
 	SET_BIT(TWCR, TWCR_TWSTO);
 	SET_BIT(TWCR, TWCR_TWINT);
+}
+
+void __vector_19() __attribute__((signal));
+void __vector_19()
+{
+	if(AsynchStatus == START_CONDITION_STATE)
+	{
+		if(START_ACK == (TWSR & 0xF8))
+		{
+			CLR_BIT(TWCR, TWCR_TWSTA);
+			TWDR = SlaveAddress;
+			AsynchStatus = SLAVE_ADDRESS_STATE;
+			SET_BIT(TWCR, TWCR_TWINT);
+		}
+	}
+	else if(AsynchStatus == SLAVE_ADDRESS_STATE)
+	{
+		if(SLAVE_ADD_AND_WR_ACK == (TWSR & 0xF8))
+		{
+			TWDR = DataByte;
+			AsynchStatus = SENDING_BYTE_STATE;
+			SET_BIT(TWCR, TWCR_TWINT);
+		}
+	}
+	else if(AsynchStatus == SENDING_BYTE_STATE)
+	{
+		if(MSTR_WR_BYTE_ACK == (TWSR & 0xF8))
+		{
+			SET_BIT(TWCR, TWCR_TWSTO);
+			AsynchStatus = STOP_CONDITION_STATE;
+			SET_BIT(TWCR, TWCR_TWINT);
+		}
+	}
+	else if(AsynchStatus == STOP_CONDITION_STATE)
+	{
+		SET_BIT(TWCR, TWCR_TWINT);
+		CLR_BIT(TWCR, TWCR_TWIE);
+		AsynchStatus = 0;
+		TWI_CallBack();
+	}
 }
