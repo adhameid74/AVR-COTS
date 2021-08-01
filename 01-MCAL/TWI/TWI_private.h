@@ -40,9 +40,6 @@
 #define DISABLED			1
 #define ENABLED				2
 
-#define READ				1
-#define WRITE				0
-
 #define START_ACK                0x08
 #define REP_START_ACK            0x10
 #define SLAVE_ADD_AND_WR_ACK     0x18
@@ -64,10 +61,5 @@ static u8 AsynchStatus = 0;
 static void (*TWI_CallBack)(void) = NULL;
 static u8 DataByte;
 static u8 SlaveAddress;
-
-static u8 SendStartCondition();
-static u8 SendRepeatedStart();
-static u8 SendSlaveAddress(u8 Copy_u8Address, u8 Copy_u8Direction);
-static void SendStopCondition();
 
 #endif

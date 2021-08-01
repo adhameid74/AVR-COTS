@@ -44,22 +44,19 @@ void TWI_voidEnableAck()
 
 u8 TWI_u8SendByteSynch(u8 Copy_u8SlaveAddress, u8 Copy_u8Data)
 {
-	if( SendStartCondition() )
+	if( TWI_u8SendStartCondition() )
 	{
 		return ERROR;
 	}
-	if( SendSlaveAddress(Copy_u8SlaveAddress, WRITE) )
+	if( TWI_u8SendSlaveAddress(Copy_u8SlaveAddress, TWI_WRITE) )
 	{
 		return ERROR;
 	}
-	TWDR = Copy_u8Data;
-	SET_BIT(TWCR, TWCR_TWINT);
-	while( GET_BIT(TWCR, TWCR_TWINT) == 0 );
-	if( MSTR_WR_BYTE_ACK != (TWSR & 0xF8) )
+	if( TWI_u8SendByte(Copy_u8Data) )
 	{
 		return ERROR;
 	}
-	SendStopCondition();
+	TWI_voidSendStopCondition();
 	return NO_ERROR;
 }
 
@@ -75,27 +72,25 @@ u8 TWI_u8SendByteAsynch(u8 Copy_u8SlaveAddress, u8 Copy_u8Data, void (*Copy_ptrC
 	return NO_ERROR;
 }
 
-u8 TWI_u8ReceiveByteSynch(u8 Copy_u8SlaveAddress, u8* Copy_u8Data)
+u8 TWI_u8ReceiveByteSynch(u8 Copy_u8SlaveAddress, u8* Copy_pu8Data)
 {
 	if( SendStartCondition() )
 	{
 		return ERROR;
 	}
-	if( SendSlaveAddress(Copy_u8SlaveAddress, READ) )
+	if( SendSlaveAddress(Copy_u8SlaveAddress, TWI_READ) )
 	{
 		return ERROR;
 	}
-	while( GET_BIT(TWCR, TWCR_TWINT) == 0 );
-	if( MSTR_RD_BYTE_WITH_ACK != (TWSR & 0xF8) )
+	if( TWI_u8ReceiveByte(Copy_pu8Data) )
 	{
 		return ERROR;
 	}
-	*Copy_u8Data = TWDR;
 	SendStopCondition();
 	return NO_ERROR;
 }
 
-static u8 SendStartCondition()
+u8 TWI_u8SendStartCondition()
 {
 	SET_BIT(TWCR, TWCR_TWSTA);
 	SET_BIT(TWCR, TWCR_TWINT);
@@ -107,7 +102,7 @@ static u8 SendStartCondition()
 	return NO_ERROR;
 }
 
-static u8 SendRepeatedStart()
+u8 TWI_u8SendRepeatedStart()
 {
 	SET_BIT(TWCR, TWCR_TWSTA);
 	SET_BIT(TWCR, TWCR_TWINT);
@@ -119,7 +114,30 @@ static u8 SendRepeatedStart()
 	return NO_ERROR;
 }
 
-static u8 SendSlaveAddress(u8 Copy_u8Address, u8 Copy_u8Direction)
+u8 TWI_u8SendByte(u8 Copy_u8Data)
+{
+	TWDR = Copy_u8Data;
+	SET_BIT(TWCR, TWCR_TWINT);
+	while( GET_BIT(TWCR, TWCR_TWINT) == 0 );
+	if( MSTR_WR_BYTE_ACK != (TWSR & 0xF8) )
+	{
+		return ERROR;
+	}
+	return NO_ERROR;
+}
+
+u8 TWI_u8ReceiveByte(u8* Copy_pu8Data)
+{
+	while( GET_BIT(TWCR, TWCR_TWINT) == 0 );
+	if( MSTR_RD_BYTE_WITH_ACK != (TWSR & 0xF8) )
+	{
+		return ERROR;
+	}
+	*Copy_pu8Data = TWDR;
+	return NO_ERROR;
+}
+
+u8 TWI_u8SendSlaveAddress(u8 Copy_u8Address, u8 Copy_u8Direction)
 {
 	CLR_BIT(TWCR, TWCR_TWSTA);
 	Copy_u8Address = Copy_u8Address<<1;
@@ -127,7 +145,7 @@ static u8 SendSlaveAddress(u8 Copy_u8Address, u8 Copy_u8Direction)
 	TWDR = Copy_u8Address;
 	SET_BIT(TWCR, TWCR_TWINT);
 	while( GET_BIT(TWCR, TWCR_TWINT) == 0 );
-	if(Copy_u8Direction == READ)
+	if(Copy_u8Direction == TWI_READ)
 	{
 		if( SLAVE_ADD_AND_RD_ACK != (TWSR & 0xF8) )
 		{
@@ -144,7 +162,7 @@ static u8 SendSlaveAddress(u8 Copy_u8Address, u8 Copy_u8Direction)
 	return NO_ERROR;
 }
 
-static void SendStopCondition()
+void TWI_voidSendStopCondition()
 {
 	SET_BIT(TWCR, TWCR_TWSTO);
 	SET_BIT(TWCR, TWCR_TWINT);
